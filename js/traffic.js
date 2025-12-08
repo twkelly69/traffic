@@ -32,7 +32,7 @@ map = null;
 barAcciHour = null;
 initMap = function () {
   map = L.map("map", {
-    center: [24.80363496720421, 120.96827655517575],
+    center: [25.037583, 121.5637],
     zoom: 12,
     zoomControl: true,
   });
@@ -286,12 +286,12 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
   navls = [
     {
       ttl: "Accident Crossfilter",
-      txt: "Accidents from the Xinzhu area in Taiwan are visualized in the period January to October 2013 – a total of 13,200 accidents and 25+ deaths. Orange represents accidents, and red are accidents where death occurred. </br></br>(Click here to start navigation.)",
+      txt: "Accidents from Taipei City in 2024 (113年) are visualized here – a total of 51,810 reported cases and 223 deaths. Orange represents all accidents, and red are accidents where death occurred. </br></br>(Click here to start navigation.)",
       act: function () {},
     },
     {
-      ttl: "Death by Month – 2013",
-      txt: "Here are the statistics by months: Orange represents accidents, and red accidents involved a death. Notice that there were no deaths in April, although the accident count is relatively high. (Click here for Day of the Week)",
+      ttl: "Death by Month – 2024",
+      txt: "Monthly statistics for Taipei: orange represents accidents, and red shows accidents involving death. Use the bars to focus on specific months. (Click here for Day of the Week)",
       act: function () {
         return d3.selectAll(".fltWeek, .fltHour").transition().style({
           opacity: 0.2,
@@ -300,7 +300,7 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     },
     {
       ttl: "Day of the Week",
-      txt: "Accidents on days of the week are relatively even; however, in our dataset, there were no accidents death on Monday. (Click here for Hour of the Day)",
+      txt: "Accidents on days of the week can be compared here; click any bar to filter the map and other charts. (Click here for Hour of the Day)",
       act: function () {
         d3.selectAll(".fltMonth, .fltHour").transition().style({
           opacity: 0.2,
@@ -312,7 +312,7 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     },
     {
       ttl: "Hour of the Day",
-      txt: "Accidents decreased after 7 pm, and the lowest number occurred between 0 am to 7 am. When we look at accident deaths, however, 0 am to 7 am is very deadly. To prevent accident deaths, this time period is a good place to start.</br></br>This is interesting, but where exactly are these accidents? (Click here to find out)",
+      txt: "Compare how activity and severity shift over the 24-hour day. Late-night and early-morning crashes can be isolated by brushing the chart.</br></br>This is interesting, but where exactly are these accidents? (Click here to find out)",
       act: function () {
         d3.selectAll(".fltMonth, .fltWeek").transition().style({
           opacity: 0.2,
@@ -324,7 +324,7 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     },
     {
       ttl: "Analysis with a Click",
-      txt: "If you drag your mouse from 0 am to 7 am, all the accidents are highlighted on the map (1 sec response time). Notice that the week and month charts are updated according to your action. (Click here for Crossfilter)",
+      txt: "If you drag your mouse from 0 am to 7 am, the accidents in that window are highlighted on the map. Notice that the week and month charts are updated according to your action. (Click here for Crossfilter)",
       act: function () {
         d3.selectAll(".filter").transition().style({
           opacity: 1,
@@ -336,32 +336,26 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
       ttl: "Crossfilter",
       txt: "You can also select multiple criteria, such as the accidents that happened from 0 am to 7 am on weekends. For these criteria, drag your mouse for the timeframe and then click on Saturday and Sunday. (Click here for Geo-Crossfilter)",
       act: function () {
-        return weekdayDim.filter(["Sat", "Sun"]);
+        return weekdayDim.filter(["Sat.", "Sun."]);
       },
     },
     {
       ttl: "Geo-Crossfilter",
-      txt: "This also work the other way, we can zoom-in into any part of the map, and the charts will update accordingly. Now we are viewing the area around the train station. (Click here for another Geo-Crossfilter)",
+      txt: "This also works the other way: zoom into any part of the map and the charts will update accordingly. Now we are viewing the area around Taipei Main Station. (Click here for another Geo-Crossfilter)",
       act: function () {
-        map.setZoom(13);
+        map.setView({ lat: 25.047675, lng: 121.517055 }, 14);
         return setTimeout(function () {
-          map.setZoom(14);
-          return setTimeout(function () {
-            map.setZoom(15);
-            return setTimeout(function () {
-              return map.setZoom(16);
-            }, 100);
-          }, 100);
-        }, 100);
+          return map.setZoom(15);
+        }, 150);
       },
     },
     {
       ttl: "Geo-Crossfilter",
-      txt: "Now we’re around Chiao Tung University.</br></br>The benefit of programming-generated visualization is that once developed, we just feed in different data to generate an up-to-date graph.</br></br>Start exploring on your own! Zoom in and out use the sliding scale on the left. You can use the directional arrows to move around the map or just drag the map itself from one part of the city to another.",
+      txt: "Now we’re around Taipei 101.</br></br>The benefit of programming-generated visualization is that once developed, we just feed in different data to generate an up-to-date graph.</br></br>Start exploring on your own! Zoom in and out using the controls, or drag the map itself from one part of the city to another.",
       act: function () {
         return map.panTo({
-          lat: 24.799232620011438,
-          lng: 120.98143010818478,
+          lat: 25.033968,
+          lng: 121.564468,
         });
       },
     },

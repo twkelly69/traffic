@@ -1,12 +1,12 @@
 # Traffic Accident Visualization
 
-This project visualizes traffic accidents in Xinzhu, Taiwan using D3, DC.js, Crossfilter, and the Google Maps JavaScript API. The visualization is fully client-side and reads data from `accidentXY.tsv`/`accidentXY_light.tsv`.
+This project visualizes traffic accidents in Taipei, Taiwan using D3, DC.js, Crossfilter, and the Google Maps JavaScript API. The visualization is fully client-side and reads data from `accidentXY.tsv`/`accidentXY_light.tsv`.
 
 ## Files
 - `index.html` – page markup and third-party includes.
 - `css/traffic.css` – styling for the map, navigation, and filter controls.
 - `js/traffic.js` – client-side logic for maps, charts, and navigation text.
-- `accidentXY.tsv` and `accidentXY_light.tsv` – tabular datasets consumed by the page.
+- `accidentXY.tsv` and `accidentXY_light.tsv` – tabular datasets consumed by the page; `accidentXY_light.tsv` is now generated from the 2024 (113年) Taipei A1/A2 crash records.
 
 ## Running locally
 No build step is required. Serve the repository root as static files and open `index.html` in a browser:
