@@ -39,8 +39,8 @@ svg text {
 }
 .ctn-table {
   width: 95%;
-  max-width: 1200px;
-  margin: 24px auto 40px;
+  max-width: 1400px;
+  margin: 24px 0 40px 20px;
   background-color: #2f2f2f;
   padding: 12px 16px 16px;
   border-radius: 6px;

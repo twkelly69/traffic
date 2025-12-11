@@ -19,7 +19,14 @@ var colorDead,
   updateGraph,
   dataTable,
   dataTableDim,
-  formatDateTime;
+  formatDateTime,
+  decodeCode,
+  weatherMap,
+  lightMap,
+  roadCategoryMap,
+  roadTypeMap,
+  accidentLocationMap,
+  accidentTypeMap;
 colorDead = "#de2d26";
 colorAcci = "rgb(255, 204, 0)";
 colorDeadScale = d3.scale.ordinal().range([colorDead]);
@@ -33,9 +40,114 @@ weekdayDim = null;
 hourDim = null;
 map = null;
 barAcciHour = null;
+weatherMap = {
+  1: "暴雨",
+  2: "強風",
+  3: "風沙",
+  4: "霧或煙",
+  5: "雪",
+  6: "雨",
+  7: "陰",
+  8: "晴",
+};
+lightMap = {
+  1: "日間自然光線",
+  2: "晨或暮光",
+  3: "夜間有照明",
+  4: "夜間無照明",
+};
+roadCategoryMap = {
+  1: "國道",
+  2: "省道",
+  3: "縣道",
+  4: "鄉道",
+  5: "市區道路",
+  6: "村里道路",
+  7: "專用道路",
+  8: "其他",
+};
+roadTypeMap = {
+  1: "有遮斷器",
+  2: "無遮斷器",
+  3: "三岔路",
+  4: "四岔路",
+  5: "多岔路",
+  6: "隧道",
+  7: "地下道",
+  8: "橋樑",
+  9: "涵洞",
+  10: "高架道路",
+  11: "彎曲路及附近",
+  12: "坡路",
+  13: "巷弄",
+  14: "直路",
+  15: "其他",
+  16: "圓環",
+  17: "廣場",
+};
+accidentLocationMap = {
+  1: "交岔路口內",
+  2: "交岔口附近",
+  3: "機車待轉區",
+  4: "機車停等區",
+  5: "交通島（含槽化線）",
+  6: "迴轉道",
+  7: "快車道",
+  8: "慢車道",
+  9: "一般車道",
+  10: "公車專用道",
+  11: "機車專用道",
+  12: "機車優先道",
+  13: "路肩、路緣",
+  14: "加速車道",
+  15: "減速車道",
+  16: "直線匝道",
+  17: "環道匝道",
+  18: "行人穿越道",
+  19: "穿越道附近",
+  20: "人行道",
+  21: "收費站附近",
+  22: "其他",
+};
+accidentTypeMap = {
+  1: "對向通行中",
+  2: "同向通行中",
+  3: "穿越道路中",
+  4: "在路上嬉戲",
+  5: "在路上作業中",
+  6: "衝進路中",
+  7: "從停車後（或中）穿出",
+  8: "佇立路邊（外）",
+  9: "其他（人與車）",
+  10: "對撞",
+  11: "對向擦撞",
+  12: "同向擦撞",
+  13: "追撞",
+  14: "倒車撞",
+  15: "路口交岔撞",
+  16: "側撞",
+  17: "其他（車與車）",
+  18: "路上翻車、摔倒",
+  19: "衝出路外",
+  20: "撞護欄（樁）",
+  21: "撞號誌、標誌桿",
+  22: "撞收費亭",
+  23: "撞交通島",
+  24: "撞非固定設施",
+  25: "撞橋樑、建築物",
+  26: "撞路樹、電桿",
+  27: "撞動物",
+  28: "撞工程施工",
+  29: "其他（車本身）",
+  30: "衝過遮斷器",
+  31: "正越過平交道中",
+  32: "暫停位置不當",
+  33: "在平交道內無法行動",
+  34: "其他（平交道）",
+};
 initMap = function () {
   map = L.map("map", {
-    center: [25.037583, 121.5637],
+    center: [24.8, 121.01],
     zoom: 12,
     zoomControl: true,
   });
@@ -83,6 +195,17 @@ formatDateTime = function (it) {
     pad(it["分"])
   );
 };
+decodeCode = function (value, map, len) {
+  var normalized;
+  if (value == null || value === "") {
+    return "未提供";
+  }
+  normalized = value.toString().trim();
+  if (len != null && normalized.length < len) {
+    normalized = normalized.padStart(len, "0");
+  }
+  return map[normalized] || map[+normalized] || "未提供";
+};
 setCircle = function (it) {
   return it
     .attr({
@@ -125,7 +248,7 @@ updateGraph = function () {
   dt.call(setCircle);
   return dt.exit().remove();
 };
-d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
+d3.tsv("./accidentXY.tsv", function (err, tsvBody) {
   var deadData,
     barPerMonth,
     barPerWeekDay,
@@ -134,7 +257,6 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     barAcciWeekDay,
     ndx,
     all,
-    coordFormatter,
     acciMonth,
     acciWeekDay,
     acciHour,
@@ -157,6 +279,14 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     d.date = new Date(d["年"], d["月"], d["日"], d["時"], d["分"]);
     d.week = weekDayTable[d.date.getDay()];
     d.dead = +d["2-30"] + +d["死"];
+    d.injury = +d["受傷"];
+    d.weather = decodeCode(d["天候"], weatherMap, 1);
+    d.light = decodeCode(d["光線"], lightMap, 1);
+    d.roadCategory = decodeCode(d["道路類別"], roadCategoryMap, 1);
+    d.roadType = decodeCode(d["道路型態"], roadTypeMap, 2);
+    d.accidentLocation = decodeCode(d["事故位置"], accidentLocationMap, 2);
+    d.accidentType = decodeCode(d["事故類型及型態"], accidentTypeMap, 2);
+    d.countyLocation = (d["縣市"] || "") + " " + (d.allLocation || "");
     if (d.dead > 0) {
       deadData.push(d);
     }
@@ -171,7 +301,6 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
   dataTable = dc.dataTable("#AccidentTable");
   ndx = crossfilter(tsvBody);
   all = ndx.groupAll();
-  coordFormatter = d3.format(".6f");
   monthDim = ndx.dimension(function (it) {
     return it["月"];
   });
@@ -318,9 +447,45 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
         },
       },
       {
-        label: "星期",
+        label: "地點",
         format: function (it) {
-          return it.week;
+          return it.countyLocation.trim();
+        },
+      },
+      {
+        label: "天候",
+        format: function (it) {
+          return it.weather;
+        },
+      },
+      {
+        label: "光線",
+        format: function (it) {
+          return it.light;
+        },
+      },
+      {
+        label: "道路類別",
+        format: function (it) {
+          return it.roadCategory;
+        },
+      },
+      {
+        label: "道路型態",
+        format: function (it) {
+          return it.roadType;
+        },
+      },
+      {
+        label: "事故位置",
+        format: function (it) {
+          return it.accidentLocation;
+        },
+      },
+      {
+        label: "事故型態",
+        format: function (it) {
+          return it.accidentType;
         },
       },
       {
@@ -332,15 +497,7 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
       {
         label: "受傷",
         format: function (it) {
-          return it["受傷"];
-        },
-      },
-      {
-        label: "座標 (緯, 經)",
-        format: function (it) {
-          return (
-            coordFormatter(it.GoogleLat) + ", " + coordFormatter(it.GoogleLng)
-          );
+          return it.injury;
         },
       },
     ])
@@ -354,11 +511,11 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
   navls = [
     {
       ttl: "事故交叉篩選",
-      txt: "這裡呈現 2024 年臺北市 A1 及 A2 類交通事故明細，共 51,810 件事故、223 起死亡。黃色代表事故，紅色代表發生死亡的事故。</br></br>（點擊此區開始導覽。）",
+      txt: "這裡呈現 2012 年新竹市 A1 及 A2 類交通事故明細，共 7,922 件事故、24 起死亡。黃色代表事故，紅色代表發生死亡的事故。</br></br>（點擊此區開始導覽。）",
       act: function () {},
     },
     {
-      ttl: "2024 年每月趨勢",
+      ttl: "2012 年每月趨勢",
       txt: "黃色是事故數量，紅色是死亡。可以看到，每個月的車禍數量差不多，但 4 月的車禍死亡最少。（點擊前往「星期別」）",
       act: function () {
         return d3.selectAll(".fltWeek, .fltHour").transition().style({
@@ -409,9 +566,9 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     },
     {
       ttl: "地理交叉篩選",
-      txt: "反過來也行，放大地圖任何區域，圖表會跟著更新。現在顯示的是台北車站周邊。（點擊切換另一個地理篩選）",
+      txt: "反過來也行，放大地圖任何區域，圖表會跟著更新。現在顯示的是新竹火車站周邊。（點擊切換另一個地理篩選）",
       act: function () {
-        map.setView({ lat: 25.047675, lng: 121.517055 }, 14);
+        map.setView({ lat: 24.8016, lng: 120.9711 }, 14);
         return setTimeout(function () {
           return map.setZoom(15);
         }, 150);
@@ -419,11 +576,11 @@ d3.tsv("./accidentXY_light.tsv", function (err, tsvBody) {
     },
     {
       ttl: "地理交叉篩選",
-      txt: "我們也可以移到台大附近。</br></br>程式化產生的視覺化有個好處：開發一次後，只要換資料就能快速得到最新圖表。</br></br>開始自己探索吧！用左側縮放滑桿或方向箭頭，也能直接拖曳地圖在城市中移動。",
+      txt: "我們也可以移到新竹科學園區周邊。</br></br>程式化產生的視覺化有個好處：開發一次後，只要換資料就能快速得到最新圖表。</br></br>開始自己探索吧！用左側縮放滑桿或方向箭頭，也能直接拖曳地圖在城市中移動。",
       act: function () {
         return map.setView({
-          lat: 25.01734,
-          lng: 121.5395,
+          lat: 24.7795,
+          lng: 121.012,
         }, 15);
       },
     },
