@@ -589,32 +589,55 @@ updateGraph = function () {
   dt.call(setCircle);
   return dt.exit().remove();
 };
-d3.tsv("./accidentXY_113.tsv", function (err, tsvBody) {
-  var deadData,
-    barPerMonth,
-    barPerWeekDay,
-    barPerHour,
-    barAcciMonth,
-    barAcciWeekDay,
-    ndx,
-    all,
-    acciMonth,
-    acciWeekDay,
-    acciHour,
-    deathMonth,
-    deathWeekDay,
-    deathHour,
-    barMt,
-    barWk,
-    barHr,
-    marginMt,
-    marginWk,
-    marginHr,
-    navls,
-    navidx,
-    nav;
-  deadData = [];
-  tsvBody.filter(function (d) {
+d3.tsv("./accidentXY_111.tsv", function (err111, tsvBody111) {
+  return d3.tsv("./accidentXY_113.tsv", function (err113, tsvBody113) {
+    var combinedTsvBody,
+      deadData,
+      barPerMonth,
+      barPerWeekDay,
+      barPerHour,
+      barAcciMonth,
+      barAcciWeekDay,
+      ndx,
+      all,
+      acciMonth,
+      acciWeekDay,
+      acciHour,
+      deathMonth,
+      deathWeekDay,
+      deathHour,
+      barMt,
+      barWk,
+      barHr,
+      marginMt,
+      marginWk,
+      marginHr,
+      navls,
+      navidx,
+      nav,
+      formatYearList,
+      rocYears,
+      rocYearLabel,
+      adYearLabel,
+      totalAccidents,
+      totalDeaths;
+    combinedTsvBody = (tsvBody111 || []).concat(tsvBody113 || []);
+    deadData = [];
+    formatYearList = function (years) {
+      var sortedYears;
+      sortedYears = years.slice().sort(function (a, b) {
+        return a - b;
+      });
+      if (sortedYears.length === 1) {
+        return sortedYears[0];
+      }
+      return (
+        sortedYears.slice(0, -1).join("、") +
+        " 與 " +
+        sortedYears[sortedYears.length - 1]
+      );
+    };
+    combinedTsvBody.filter(function (d) {
     d.GoogleLng = +d.GoogleLng;
     d.GoogleLat = +d.GoogleLat;
     // 將時間欄位轉成數字，避免交叉篩選時以字串比較導致範圍內沒有資料
@@ -688,6 +711,24 @@ d3.tsv("./accidentXY_113.tsv", function (err, tsvBody) {
     }
     return true;
   });
+    rocYears = Array.from(
+      new Set(
+        combinedTsvBody.map(function (data) {
+          return data["年"];
+        }),
+      ),
+    );
+    rocYearLabel = formatYearList(rocYears) + " 年";
+    adYearLabel =
+      formatYearList(
+        rocYears.map(function (year) {
+          return year + 1911;
+        }),
+      ) + " 年";
+    totalAccidents = combinedTsvBody.length;
+    totalDeaths = deadData.reduce(function (sum, record) {
+      return sum + record.dead;
+    }, 0);
   barPerMonth = dc.barChart("#DeathMonth");
   barPerWeekDay = dc.barChart("#DeathWeekDay");
   barPerHour = dc.barChart("#DeathHour");
@@ -695,7 +736,7 @@ d3.tsv("./accidentXY_113.tsv", function (err, tsvBody) {
   barAcciWeekDay = dc.barChart("#AcciWeekDay");
   barAcciHour = dc.barChart("#AcciHour");
   dataTable = dc.dataTable("#AccidentTable");
-  ndx = crossfilter(tsvBody);
+    ndx = crossfilter(combinedTsvBody);
   all = ndx.groupAll();
   monthDim = ndx.dimension(function (it) {
     return it["月"];
@@ -935,7 +976,16 @@ d3.tsv("./accidentXY_113.tsv", function (err, tsvBody) {
   navls = [
     {
       ttl: "事故交叉篩選",
-      txt: "這裡呈現 2024 年（民國 113 年）臺北市 A1 與 A2 類交通事故，共 22,357 起事故、74 起死亡。黃色代表事故，紅色代表發生死亡的事故。</br></br>（點擊此區開始導覽。）",
+        txt:
+          "這裡呈現 " +
+          adYearLabel +
+          "（民國 " +
+          rocYearLabel +
+          "）臺北市 A1 與 A2 類交通事故，共 " +
+          totalAccidents.toLocaleString() +
+          " 起事故、" +
+          totalDeaths.toLocaleString() +
+          " 起死亡。黃色代表事故，紅色代表發生死亡的事故。</br></br>（點擊此區開始導覽。）",
       act: function () {},
     },
     {
@@ -1029,4 +1079,5 @@ d3.tsv("./accidentXY_113.tsv", function (err, tsvBody) {
     ++navidx;
     return nav();
   });
+});
 });
